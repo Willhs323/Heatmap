@@ -2,7 +2,7 @@ rm(list=ls(all=T))
 options(stringsASFactors = F) # no automatic data transformation
 options("scipen" = 100, "digits" = 4) # supress math annotation
 
-setwd('ANAMS paper/AAIP presentation/')
+setwd('~/ANAMS paper/AAIP presentation/')
 residents <- read.csv('residents.csv', na.strings = c("", "NA"))
 str(residents)
 
@@ -26,7 +26,7 @@ rownames(heatmap) <- c("Aerospace Medicine", "Allergy & Immunology", "Anesthesio
                        "Medical Genetics", "Neurosurgery", "Neurology", "Nuclear Medicine", "OB/GYN",
                        "Occupational & Environmental Medicine", "Ophthalmology", "Orthopedic Surgery", 
                        "Osteopathic Neuromuscular Medicine", "Otolaryngology", "Pain Medicine", "Pathology",
-                       "Pediatrics", "PM&R", "Plastic Surgery", "Psychiatry", "Public Health & General Preventative Medicine",
+                       "Pediatrics", "PM&R", "Plastic Surgery", "Psychiatry", "Public Health & Preventative Medicine",
                        "Radiation Oncology", "Radiology", "Interventional Radiology", "General Surgery",
                        "Thoracic Surgery", "Transitional year", "Urology", "Vascular Surgery"
 )
@@ -81,7 +81,7 @@ for (x in 1:34) {
     c <- (residents[x,10] - residents[x,y])
     d <- (residents[35,10] - residents[35,y] - residents[x,10] + residents[x,y])
     data <- matrix(c(a,b,c,d),nrow = 2, ncol = 2, byrow = TRUE)
-    heatmap[x,y] <- ((a/b) / (c/d))
+    heatmap[x,y] <- ((a/c) / (b/d))
     
     if (heatmap[x,y] == 0) {
       heatmaporhigh[x,y] <- 0
@@ -101,14 +101,19 @@ View(heatmap)
 View(heatmaporhigh)
 View(heatmaporlow)
 
-# Now get asterisks in statistically significant OR where low > 1 and high < 1
-
+# Now get asterisks in statistically significant OR at alpha = 0.05
 star <- heatmap
 for (x in 1:34){
   for (y in 1:9) {
     if (heatmaporhigh[x,y] < 1 | heatmaporlow[x,y] > 1) {
-      # add * to data in heatmap
-      star[x,y] <- paste(star[x,y], "/*")
+      if (heatmap[x,y] == 0) {
+        star[x,y] <- c("NA")
+        #star[x,y] <- paste(star[x,y], "")
+      } else {
+        # add * to data in heatmap
+        star[x,y] <- paste(star[x,y], "/*")
+      } 
+      
     }
   }
 }
@@ -122,26 +127,47 @@ star <- melt(data = star, id = "Specialty")
 View(star)
 
 test <- star
-View(test)
-
 test <- separate(data = test, col = value, into = c("newvalue", "star"), sep = c("/"))
 test$newvalue <- as.numeric(test$newvalue)
-test <- replace(test, is.na(test), "")
+
+# want star NA to be removed
+for (a in 1:306) {
+  if (is.na(test[a,4]) == TRUE) {
+    test[a,4] <- c("")
+  } else {
+    test[a,4] <- c("*")
+  }
+  }
 View(test)
 
+# Make 1 column to map to colors to include Na, make 1 column map to labels so it is presented as zero
+newtest <- cbind(test, test$newvalue)
+colnames(newtest)[5] <- "textlabels"
+View(newtest)
+for (a in 1:306) {
+  if(is.na(newtest[a,5])) {
+    newtest[a,5] <- 0
+  }
+}
+colnames(newtest)[3] <- "Odds Ratio"
+View(newtest)
+
 x11()
-ggplot(data = test, aes(x = variable, y = Specialty, fill = newvalue)) +
+ggplot(data = newtest, aes(x = variable, y = Specialty, fill = `Odds Ratio`)) +
   geom_tile() +
   theme_bw() +
-  labs(title = "Odds Ratios: Resident Race and Specialty") +
+  labs(title = "2021-2022 Resident Race and Specialty") +
   theme(plot.title = element_text(size = 24, face = "bold")) +
   theme(axis.title.x = element_blank()) +
   theme(axis.title.y = element_blank()) +
-  scale_fill_gradient2(low = "red", mid = "white", high = "steelblue", midpoint = 1) +
-  geom_text(aes(label = paste(round(newvalue, digits = 1), star)), color = "black", size = 4) +
+  scale_fill_gradient2(low = "red", mid = "white", high = "steelblue", midpoint = 1, na.value = "gray80", breaks = c(0.2, 1:9), limits = c(0.2,9)) + 
+  geom_text(aes(label = paste(round(textlabels, digits = 1), star)), color = "black", size = 4) +
   theme(legend.text = element_text(size = 16)) +
-  theme(legend.title = element_blank()) +
-  theme(legend.key.size = unit(1.5, "cm"))
+  theme(legend.position = "right", legend.box.just = "center") +
+  theme(legend.title = element_text(size = 16)) +
+  theme(legend.key.size = unit(1.5, 'cm')) +
+  geom_point(data = newtest, aes(size="0"), shape =NA, colour = "grey80") +
+  guides(size=guide_legend("No Residents",  override.aes=list(shape = 15, size = 20),label = TRUE, direction = "vertical"))
 
 write.csv(heatmap, file = '/users/M276066/Documents/ANAMS paper/Heatmap/heatmap.csv', row.names=TRUE)
 
@@ -162,3 +188,6 @@ ggplot(data = naonly, aes(x = variable, y = Specialty, fill = newvalue)) +
   theme(legend.text = element_text(size = 16)) +
   theme(legend.title = element_blank()) +
   theme(legend.key.size = unit(1.5, "cm"))
+
+#####
+# heatmap md only
