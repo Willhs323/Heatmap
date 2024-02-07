@@ -37,6 +37,7 @@ View(heatmap)
 
 #####
 # Final loop - if making without statistical testing and just displaying OR
+# Graph needs some work
 for (x in 1:34) {
   for (y in 1:9) {
     data <- matrix(c((residents[x,y]), 
@@ -194,5 +195,5 @@ ggplot(data = naonly, aes(x = variable, y = Specialty, fill = `Odds Ratio`)) +
   scale_fill_gradient2(low = "red", mid = "white", high = "steelblue", midpoint = 1, na.value = "gray80", breaks = c(0.4, 1:5), limits = c(0.4,5)) +
   geom_text(aes(label = paste(round(`textlabels`, digits = 1), star)), color = "black", size = 4) +
   theme(legend.text = element_text(size = 16)) +
-  theme(legend.title = element_blank()) +
-  theme(legend.key.size = unit(1.5, "cm")) 
+  theme(legend.title = element_text(size = 16)) +
+  theme(legend.key.size = unit(1.5, "cm"))
