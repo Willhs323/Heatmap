@@ -9,6 +9,22 @@ library(epitools)
 library(readxl)
 library(writexl)
 
+
+# For figure
+residents <- read.csv('residents.csv')
+y2020 <- read.csv('2020')
+y2021 <- read.csv('2021')
+res2022 <- read.csv('2022')
+res2023 <- read.csv('2023.csv')
+
+pnorm(q = 4.417, mean = 0)
+
+
+a <- as_tibble(average)
+a %>% 
+  print(n = 35)
+
+
 #####
 # use this one
 # Remove unknown and other from numerator only
@@ -49,7 +65,10 @@ for (i in 1:35) {
 
 rawtotal <- total
 average <- rawtotal / 4
+
+# We actually use total in the graph. Has total counts but don't calculate them
 total <- total[,-c(8)]
+
 
 # Print total spreadsheet
     rownames(rawtotal) <- c("Aerospace Medicine", "Allergy & Immunology", "Anesthesiology", "Child Neurology",
@@ -74,15 +93,23 @@ total <- total[,-c(8)]
     colnames(average) <- c("AI/AN", "Asian", "Black", "Hispanic", "Native Hawaiian", "White", "Other", "Unknown", "Non-US Citizen", "Unduplicated Total")
     View(rawtotal)
     View(average)
-    average[,10] / average[35,10] * 100
-    sort(average[,10], decreasing = TRUE)
-    sort(average[,10] / average[35,10] * 100, decreasing = TRUE)
+    
+    average[,10] / average[35,10] * 100 # Percent of all residents in a given speccialty - alphabetical
+    sort(average[,10], decreasing = TRUE) # Sort by greatest numbers in a specialty
+    sort(average[,10] / average[35,10] * 100, decreasing = TRUE) # sort by percent in a specialty
     setwd('~/ANAMS paper/Heatmap/Journal 3/')
     write.csv(average, file = "Average counts, 2019-2023")
+    
     rawtotal[35,] / rawtotal[35,10] * 100
     rawtotal[,10] / 4
     sort(x = rawtotal[,10]/4,decreasing = TRUE)
     sort(x = rawtotal[,10]/rawtotal[35,10]*100,decreasing = TRUE)
+    
+    View(average)
+    str(average)
+    
+  
+    
     
     ## Start Appendix ##
     y1920 <- y2020
@@ -141,7 +168,10 @@ total <- total[,-c(8)]
           apx2[i,6] <- paste0(round(as.numeric(avgpct),1),"%")
           apx2[i,7] <- paste0(round(as.numeric(pctchangespecialty[i]),0),"%")
         }      
-      View(apx2)      
+      View(apx2)
+      
+      
+      
 ## start Making Heatmap ##
     heatmap <- matrix(0, 34, 8)
     rownames(heatmap) <- c("Aerospace Medicine", "Allergy & Immunology", "Anesthesiology", "Child Neurology",
@@ -153,11 +183,13 @@ total <- total[,-c(8)]
                            "Radiation Oncology", "Radiology", "Interventional Radiology", "General Surgery",
                            "Thoracic Surgery", "Transitional year", "Urology", "Vascular Surgery"
     )
-    colnames(heatmap) <- c("AI/AN", "Asian", "Black", "Hispanic", "Native Hawaiian", "White", "Other", "Non-US Citizen")
+    colnames(heatmap) <- c("AIAN", "Asian", "Black", "Hispanic", "Native Hawaiian", "White", "Other", "Non-US Citizen")
     View(heatmap)
     
     heatmaporhigh <- matrix(0, 34, 8)
     heatmaporlow <- matrix(0, 34, 8)
+    
+# Use total without unknown
     
 ## Loop to make OR ## - 95% Confidence interval
 for (x in 1:34) {
@@ -194,7 +226,7 @@ rownames(heatmaporhigh) <- c("Aerospace Medicine", "Allergy & Immunology", "Anes
                        "Radiation Oncology", "Radiology", "Interventional Radiology", "General Surgery",
                        "Thoracic Surgery", "Transitional year", "Urology", "Vascular Surgery"
 )
-colnames(heatmaporhigh) <- c("AI/AN", "Asian", "Black", "Hispanic", "Native Hawaiian", "White", "Other", "Non-US Citizen")
+colnames(heatmaporhigh) <- c("AIAN", "Asian", "Black", "Hispanic", "Native Hawaiian", "White", "Other", "Non-US Citizen")
 rownames(heatmaporlow) <- c("Aerospace Medicine", "Allergy & Immunology", "Anesthesiology", "Child Neurology",
                        "Dermatology", "Emergency Medicine", "Family Medicine", "Internal Medicine", "Med-Peds", 
                        "Medical Genetics", "Neurosurgery", "Neurology", "Nuclear Medicine", "OB/GYN",
@@ -204,7 +236,7 @@ rownames(heatmaporlow) <- c("Aerospace Medicine", "Allergy & Immunology", "Anest
                        "Radiation Oncology", "Radiology", "Interventional Radiology", "General Surgery",
                        "Thoracic Surgery", "Transitional year", "Urology", "Vascular Surgery"
 )
-colnames(heatmaporlow) <- c("AI/AN", "Asian", "Black", "Hispanic", "Native Hawaiian", "White", "Other", "Non-US Citizen")
+colnames(heatmaporlow) <- c("AIAN", "Asian", "Black", "Hispanic", "Native Hawaiian", "White", "Other", "Non-US Citizen")
 View(heatmaporhigh)
 View(heatmaporlow)
 
@@ -236,7 +268,7 @@ View(heatmaporlow)
       }
           # Now run it through star
 
-    # Is p significant at 0.001 - 99.9% Use this one as an asterisks
+    # Is p significant at 0.0001 - 99.99% Use this one as an asterisks
     ## Loop to make OR ##
     for (x in 1:34) {
       for (y in 1:8) {
@@ -251,18 +283,18 @@ View(heatmaporlow)
           heatmaporhigh[x,y] <- 0
           heatmaporlow[x,y] <- 0
         } else {
-          heatmaporhigh[x,y] <- (exp(log(heatmap[x,y] + 3.89*(sqrt(1/a + 1/b + 1/c + 1/d))))) 
-          if ((heatmap[x,y] - 3.89*(sqrt(1/a + 1/b + 1/c + 1/d))) < 0) {
+          heatmaporhigh[x,y] <- (exp(log(heatmap[x,y] + 3.891*(sqrt(1/a + 1/b + 1/c + 1/d))))) 
+          if ((heatmap[x,y] - 3.891*(sqrt(1/a + 1/b + 1/c + 1/d))) < 0) {
             heatmaporlow[x,y] <- 0
           } else {
-            heatmaporlow[x,y] <- (exp(log(heatmap[x,y] - 3.89*(sqrt(1/a + 1/b + 1/c + 1/d)))))
+            heatmaporlow[x,y] <- (exp(log(heatmap[x,y] - 3.891*(sqrt(1/a + 1/b + 1/c + 1/d)))))
           }
         }
       }
     }
     # Now run it through star
 
-# Is p significant at 0.0001 - 99.99% this is an adjusted cutoff
+# Is p significant at 0.00001 - 99.999% this is an adjusted cutoff
 ## Loop to make OR ##
 for (x in 1:34) {
   for (y in 1:8) {
@@ -287,10 +319,12 @@ for (x in 1:34) {
   }
 }
     # Now run it through star
-
+View(heatmap)
+View(heatmaporhigh)
+View(heatmaporlow)
 
 ## Start making Figure 1 ##
-# Now get asterisks in statistically significant OR at alpha = 0.05
+# Now get asterisks in statistically significant OR
 star <- heatmap
 for (x in 1:34){
   for (y in 1:8) {
@@ -300,7 +334,7 @@ for (x in 1:34){
         #star[x,y] <- paste(star[x,y], "")
       } else {
         # add * to data in heatmap
-        star[x,y] <- paste(star[x,y], "/*")
+      star[x,y] <- paste(star[x,y], "/*")
       }
     }
   }
@@ -357,6 +391,13 @@ ggplot(data = newtest, aes(x = variable, y = Specialty, fill = `Odds Ratio`)) +
   theme(legend.key.size = unit(1.5, 'cm')) +
   geom_point(data = newtest, aes(size="0"), shape =NA, colour = "grey80") +
   guides(size=guide_legend("No Residents",  override.aes=list(shape = 15, size = 20),label = TRUE, direction = "vertical"))
+
+setwd('~/ANAMS paper/Heatmap/sub_JNMA/')
+ggsave("Figure1_600dpi.tiff", dpi=600)
+
+
+
+?ggsave
 
 
 #####
